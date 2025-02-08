@@ -100,6 +100,27 @@ To debug network issues and ensure proper Docker setup, the following steps were
    curl -s http://localhost:8083/connectors/mysql-connector/status | jq
    ```
 
+### Kafka Configuration Update
+
+To enable external access from the host machine (IP `192.168.0.11`), update your Kafka configuration:
+
+```yaml
+  kafka:
+    image: confluentinc/cp-kafka:7.4.0
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+      - "29092:29092"      
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://192.168.0.11:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+```
+
 ### Testing the Setup
 
 After successfully configuring and running the Debezium MySQL connector, real-time change data capture (CDC) from MySQL was tested with the following steps:
@@ -130,7 +151,18 @@ After successfully configuring and running the Debezium MySQL connector, real-ti
      --from-beginning
    ```
 
-3. **Sample Output:**
+3. **Consume Kafka Messages Using PainTest (External Client):**
+
+   To test external Kafka connectivity, use PainTest or any other Kafka client from your host machine:
+
+   ```bash
+   kafka-console-consumer \
+     --bootstrap-server 192.168.0.11:9092 \
+     --topic dbserver1.test_db.customers \
+     --from-beginning
+   ```
+
+4. **Sample Output:**
    - **Insert Event:**
      ```json
      {
@@ -178,4 +210,4 @@ After successfully configuring and running the Debezium MySQL connector, real-ti
      }
      ```
 
-By following these steps, real-time data changes from MySQL were successfully captured and consumed via Kafka topics.
+By following these steps, real-time data changes from MySQL were successfully captured and consumed via Kafka topics, both internally and externally using PainTest or similar tools.
