@@ -100,4 +100,82 @@ To debug network issues and ensure proper Docker setup, the following steps were
    curl -s http://localhost:8083/connectors/mysql-connector/status | jq
    ```
 
-By following these steps, the Debezium MySQL connector was successfully configured and started without further issues.
+### Testing the Setup
+
+After successfully configuring and running the Debezium MySQL connector, real-time change data capture (CDC) from MySQL was tested with the following steps:
+
+1. **Perform Data Modifications in MySQL:**
+   - **Insert New Data:**
+     ```sql
+     INSERT INTO customers (first_name, last_name, email) 
+     VALUES ('Alice', 'Wonderland', 'alice@example.com');
+     ```
+   - **Update Data:**
+     ```sql
+     UPDATE customers 
+     SET email = 'alice.updated@example.com' 
+     WHERE first_name = 'Alice';
+     ```
+   - **Delete Data:**
+     ```sql
+     DELETE FROM customers 
+     WHERE first_name = 'Alice';
+     ```
+
+2. **Consume Kafka Messages to Verify Changes:**
+   ```bash
+   docker exec -it debeziumkafka-kafka-1 kafka-console-consumer \
+     --bootstrap-server kafka:9092 \
+     --topic dbserver1.test_db.customers \
+     --from-beginning
+   ```
+
+3. **Sample Output:**
+   - **Insert Event:**
+     ```json
+     {
+       "before": null,
+       "after": {
+         "id": 3,
+         "first_name": "Alice",
+         "last_name": "Wonderland",
+         "email": "alice@example.com"
+       },
+       "op": "c"
+     }
+     ```
+
+   - **Update Event:**
+     ```json
+     {
+       "before": {
+         "id": 3,
+         "first_name": "Alice",
+         "last_name": "Wonderland",
+         "email": "alice@example.com"
+       },
+       "after": {
+         "id": 3,
+         "first_name": "Alice",
+         "last_name": "Wonderland",
+         "email": "alice.updated@example.com"
+       },
+       "op": "u"
+     }
+     ```
+
+   - **Delete Event:**
+     ```json
+     {
+       "before": {
+         "id": 3,
+         "first_name": "Alice",
+         "last_name": "Wonderland",
+         "email": "alice.updated@example.com"
+       },
+       "after": null,
+       "op": "d"
+     }
+     ```
+
+By following these steps, real-time data changes from MySQL were successfully captured and consumed via Kafka topics.
