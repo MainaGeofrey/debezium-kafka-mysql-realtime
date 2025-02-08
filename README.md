@@ -65,3 +65,39 @@ After applying these changes, the connector transitioned to a **RUNNING** state:
     "type": "source"
 }
 ```
+
+### Troubleshooting Steps and Docker Commands
+
+To debug network issues and ensure proper Docker setup, the following steps were performed:
+
+1. **Remove Existing Docker Containers and Networks:**
+   ```bash
+   docker-compose down
+   docker network prune -f
+   docker volume prune -f
+   docker system prune -a -f
+   ```
+
+2. **Rebuild and Restart Docker Compose:**
+   ```bash
+   docker-compose up --build -d
+   ```
+
+3. **Check Docker Networks:**
+   ```bash
+   docker network ls
+   docker network inspect <network_name>
+   ```
+
+4. **Debug Kafka Topics:**
+   ```bash
+   docker exec -it debeziumkafka-kafka-1 kafka-topics --bootstrap-server kafka:9092 --list
+   docker exec -it debeziumkafka-kafka-1 kafka-topics --bootstrap-server kafka:9092 --create --topic dbhistory.test_db --partitions 1 --replication-factor 1
+   ```
+
+5. **Verify Connector Status:**
+   ```bash
+   curl -s http://localhost:8083/connectors/mysql-connector/status | jq
+   ```
+
+By following these steps, the Debezium MySQL connector was successfully configured and started without further issues.
