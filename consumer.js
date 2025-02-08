@@ -3,7 +3,7 @@ const { Kafka } = require('kafkajs');
 // Initialize Kafka connection with updated broker IP
 const kafka = new Kafka({
     clientId: 'debezium-listener',
-    brokers: ['192.168.0.11:9092'],  // Updated from 'localhost:9092' to match Docker network config
+    brokers: ['192.168.0.11:29092'],  // Updated port to match external listener
 });
 
 // Create a consumer instance
